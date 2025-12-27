@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>INVITACIÓN</title>
+
+  <style>
+    :root{
+      --bg:#000;
+      --glass:rgba(0,0,0,.48);
+      --border:rgba(255,255,255,.16);
+      --text:rgba(255,255,255,.95);
+      --muted:rgba(255,255,255,.82);
+      --radius:22px;
+      --btnbg:rgba(0,0,0,.60);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      background: var(--bg);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      padding:18px;
+      overflow:hidden;
+    }
+    .upper{ text-transform: uppercase; letter-spacing: .7px; }
+
+    .wrap{ width:min(520px,96vw); display:flex; flex-direction:column; gap:12px; align-items:center; }
+    .card{
+      width:100%;
+      aspect-ratio: 9 / 16;
+      border-radius: var(--radius);
+      overflow:hidden;
+      position:relative;
+      background:#000;
+      box-shadow: 0 30px 90px rgba(0,0,0,.65);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Video */
+    video, .fallback{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .fallback{
+      display:none;
+      place-items:center;
+      text-align:center;
+      padding:24px;
+      background: radial-gradient(900px 700px at 50% 20%, rgba(255,255,255,.13), transparent 60%), #050509;
+      color:var(--muted);
+      font-weight:950;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+      z-index:3;
+    }
+
+    /* Vignette suave */
+    .vignette{
+      position:absolute; inset:0;
+      pointer-events:none;
+      background: radial-gradient(70% 60% at 50% 45%, transparent 55%, rgba(0,0,0,.52) 100%);
+      opacity:.92;
+      z-index:2;
+    }
+
+    /* INFO: oculto hasta revelar */
+    .info{
+      opacity:0;
+      transform: translateY(10px);
+      pointer-events:none;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .revealed .info{
+      opacity:1;
+      transform: translateY(0);
+      pointer-events:auto;
+    }
+
+    /* Mini iconos esquina */
+    .cornerIcon{
+      position:absolute;
+      z-index:11;
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.18);
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+    }
+    .cornerIcon:active{ transform: scale(.98); }
+    .cornerIcon span{ font-size:22px; }
+    .cakeIcon{ top:14px; right:14px; }
+
+    /* Mini mapa arriba izquierda */
+    .miniMapWrap{
+      position:absolute;
+      top:14px;
+      left:14px;
+      width:180px;
+      height:140px;
+      z-index:11;
+      border-radius:16px;
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.18);
+      display:flex;
+      flex-direction:column;
+    }
+    .miniMapHead{
+      height:32px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 10px;
+      font-weight:950;
+      font-size:11px;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      color:rgba(255,255,255,.92);
+    }
+    .miniMapOpen{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      border-radius:10px;
+      padding:6px 8px;
+      font-weight:950;
+      font-size:10px;
+      cursor:pointer;
+      text-transform:uppercase;
+    }
+    .miniMapBody{ position:relative; flex:1; }
+    .miniMapBody iframe{
+      width:100%; height:100%;
+      border:0; display:block;
+      pointer-events:none;
+      filter: saturate(1.05) contrast(1.08);
+    }
+    .mapActive .miniMapBody iframe{ pointer-events:auto; }
+    .miniMapOverlay{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      background: rgba(0,0,0,.35);
+      color: rgba(255,255,255,.92);
+      font-weight:950;
+      font-size:11px;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+      cursor:pointer;
+      user-select:none;
+      padding:10px;
+      text-align:center;
+    }
+    .mapActive .miniMapOverlay{ display:none; }
+
+    /* Hint */
+    .tapHint{
+      position:absolute;
+      left:50%;
+      bottom:22px;
+      transform: translateX(-50%);
+      z-index:10;
+      padding:9px 11px;
+      border-radius:999px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      font-weight:950;
+      font-size:12px;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      transition: opacity .2s ease;
+      text-align:center;
+    }
+    .revealed .tapHint{ opacity:0; pointer-events:none; }
+
+    /* Panel inferior */
+    .panel{
+      position:absolute;
+      left:14px; right:14px;
+      bottom:14px;
+      z-index:12;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .pills{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:center;
+      pointer-events:none;
+    }
+    .pill{
+      padding:10px 12px;
+      border-radius:999px;
+      backdrop-filter: blur(10px);
+      background: var(--glass);
+      border:1px solid var(--border);
+      font-weight:950;
+      font-size:12px;
+      text-align:center;
+      color:var(--text);
+      max-width:100%;
+      font-variant-numeric: tabular-nums;
+      pointer-events:none;
+    }
+
+    .row{ display:flex; gap:10px; }
+    .btn{
+      flex:1;
+      border:1px solid rgba(255,255,255,.18);
+      background: var(--btnbg);
+      color:#fff;
+      padding:12px 10px;
+      border-radius:16px;
+      font-size:12px;
+      font-weight:950;
+      cursor:pointer;
+      backdrop-filter: blur(10px);
+      text-decoration:none;
+      text-align:center;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+    }
+    .btn:active{ transform:scale(.99); }
+    .btnWide{ width:100%; }
+
+    /* Spark (solo click) */
+    .spark{
+      position:fixed;
+      left:0; top:0;
+      transform: translate(-50%, -50%);
+      pointer-events:none;
+      z-index:9999;
+      font-size:18px;
+      opacity:0;
+      animation: rise 1.05s ease-out forwards;
+      filter: drop-shadow(0 0 10px rgba(255,180,80,.20));
+    }
+    @keyframes rise{
+      0%   { opacity:0; transform: translate(-50%, -50%) translateY(0) scale(.9); }
+      12%  { opacity:1; }
+      100% { opacity:0; transform: translate(-50%, -50%) translateY(-70px) scale(1.12); }
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:22px;
+      transform:translateX(-50%);
+      background: rgba(0,0,0,.75);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(10px);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:999px;
+      font-weight:950;
+      font-size:12px;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+      z-index:99999;
+    }
+    .toast.show{ opacity:1; }
+
+    /* Indicador de presión (3s) */
+    .pressBadge{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      z-index:10;
+      padding:10px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(10px);
+      font-weight:950;
+      font-size:12px;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.92);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .15s ease;
+      text-align:center;
+    }
+    .pressing .pressBadge{ opacity:1; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card upper" id="card">
+      <!-- VIDEO (loop ON) -->
+      <video id="bgVideo" src="assets/video.mp4" autoplay muted loop playsinline></video>
+      <div id="fallback" class="fallback">NO ENCUENTRO ASSETS/VIDEO.MP4</div>
+
+      <!-- AUDIO -->
+      <audio id="bgMusic" src="assets/music.mp3" preload="auto"></audio>
+
+      <div class="vignette"></div>
+
+      <!-- MAPA -->
+      <div class="miniMapWrap" id="miniMapWrap" aria-label="MINI MAPA">
+        <div class="miniMapHead">
+          <span>MAPA</span>
+          <button class="miniMapOpen" id="openMapsBtn" type="button">ABRIR</button>
+        </div>
+        <div class="miniMapBody">
+          <iframe id="miniMapFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen title="MAPA"></iframe>
+          <div class="miniMapOverlay" id="mapOverlay">TOCÁ PARA<br>ACTIVAR</div>
+        </div>
+      </div>
+
+      <!-- WHATSAPP -->
+      <a class="cornerIcon cakeIcon" id="waCake" href="#" aria-label="WHATSAPP">
+        <span>🎂</span>
+      </a>
+
+      <!-- Hint -->
+      <div class="tapHint" id="tapHint">LA INFO APARECE A LOS 55s O MANTENIENDO 3s</div>
+      <div class="pressBadge" id="pressBadge">MANTENIENDO…</div>
+
+      <!-- PANEL (solo aparece en 2 casos) -->
+      <div class="info panel" id="panel">
+        <div class="pills">
+          <div class="pill">📍 GALERIA IMPULSO 775 — JUJUY — BARRIO CENTRO</div>
+          <div class="pill" id="datePill">📅 FECHA — ⏰ HORA</div>
+          <div class="pill" id="countdownPill">⏳ FALTAN: --D --:--:--</div>
+        </div>
+
+        <div class="row">
+          <button class="btn" id="musicBtn" type="button">MÚSICA: OFF</button>
+          <a class="btn" id="calBtn" target="_blank" rel="noopener">CALENDARIO</a>
+          <button class="btn" id="shareBtn" type="button">COMPARTIR</button>
+        </div>
+
+        <button class="btn btnWide" id="waBtn" type="button">CONFIRMAR POR WHATSAPP</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast upper" id="toast">LISTO</div>
+
+  <script>
+    // ===== CONFIG =====
+    const PHONE = "5493884085410";
+    const ADDRESS = "GALERIA IMPULSO 775, JUJUY, BARRIO CENTRO";
+
+    // Info aparece automáticamente a los 55s (solo una vez)
+    const REVEAL_AT_SECONDS = 55;
+
+    // Evento: EN 17 DÍAS (hora fija 20:39)
+    const DAYS_FROM_NOW = 17;
+    const EVENT_HOUR = 20;
+    const EVENT_MIN = 39;
+
+    // ===== Helpers fecha =====
+    function getEventDateInDays(days){
+      const now = new Date();
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), EVENT_HOUR, EVENT_MIN, 0, 0);
+      d.setDate(d.getDate() + days);
+      if (d.getTime() <= now.getTime()) d.setDate(d.getDate() + 1);
+      return d;
+    }
+    const eventDate = getEventDateInDays(DAYS_FROM_NOW);
+
+    function fmtDateES(d){
+      const meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+      const dd = d.getDate();
+      const mm = meses[d.getMonth()];
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mi = String(d.getMinutes()).padStart(2,'0');
+      return `${dd} DE ${mm} — ${hh}:${mi}`;
+    }
+    document.getElementById('datePill').textContent = `📅 ${fmtDateES(eventDate)}`;
+
+    // ===== Reveal control (solo 2 casos) =====
+    const card = document.getElementById('card');
+    const vid = document.getElementById('bgVideo');
+    let revealed = false;
+
+    function revealInfo(reason){
+      if (revealed) return;
+      revealed = true;
+      card.classList.add('revealed');
+      toast(reason === "timer" ? "INFO MOSTRADA" : "INFO MOSTRADA");
+    }
+
+    // Auto a los 55s: usamos el tiempo acumulado de reproducción, aunque esté en loop.
+    // Para que sea exacto incluso con loop, contamos tiempo real desde que carga/arranca.
+    let startTime = null;
+    let timerId = null;
+
+    function start55sTimer(){
+      if (timerId) return;
+      startTime = performance.now();
+      timerId = setInterval(() => {
+        const elapsedSec = (performance.now() - startTime) / 1000;
+        if (elapsedSec >= REVEAL_AT_SECONDS) {
+          clearInterval(timerId);
+          timerId = null;
+          revealInfo("timer");
+        }
+      }, 250);
+    }
+
+    // Cuando el video puede reproducirse, arrancamos el timer (si no arrancó)
+    vid.addEventListener('playing', () => start55sTimer());
+    // si el navegador no dispara 'playing' rápido, igual arrancamos al cargar:
+    window.addEventListener('load', () => start55sTimer());
+
+    // ===== Press 3s (mouse + touch) =====
+    const pressBadge = document.getElementById('pressBadge');
+    let pressTimer = null;
+    let pressing = false;
+
+    function startPress(){
+      if (revealed) return;
+      pressing = true;
+      card.classList.add('pressing');
+      pressTimer = setTimeout(() => {
+        revealInfo("press");
+        endPress();
+      }, 3000);
+    }
+    function endPress(){
+      pressing = false;
+      card.classList.remove('pressing');
+      if (pressTimer) clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+
+    // NO iniciar press si tocó controles
+    function shouldIgnorePress(target){
+      return !!(target.closest('.miniMapWrap') || target.closest('.cornerIcon') || target.closest('#panel'));
+    }
+
+    // Touch
+    card.addEventListener('touchstart', (e) => {
+      if (shouldIgnorePress(e.target)) return;
+      startPress();
+    }, {passive:true});
+    card.addEventListener('touchend', endPress);
+    card.addEventListener('touchcancel', endPress);
+
+    // Mouse
+    card.addEventListener('mousedown', (e) => {
+      if (shouldIgnorePress(e.target)) return;
+      startPress();
+    });
+    window.addEventListener('mouseup', endPress);
+
+    // ===== WhatsApp =====
+    function buildWhatsAppURL(message){
+      const txt = encodeURIComponent(message);
+      const waMe = `https://wa.me/${PHONE}?text=${txt}`;
+      const apiWa = `https://api.whatsapp.com/send?phone=${PHONE}&text=${txt}`;
+      return { waMe, apiWa };
+    }
+    function openWhatsApp(message){
+      const { waMe, apiWa } = buildWhatsAppURL(message);
+      const w = window.open(waMe, '_blank', 'noopener');
+      if (!w) window.open(apiWa, '_blank', 'noopener');
+    }
+    const baseMsg = `HOLA! CONFIRMO MI ASISTENCIA. 📍 ${ADDRESS}. 🗓️ ${fmtDateES(eventDate)}.`;
+
+    document.getElementById('waCake').addEventListener('click', (e) => {
+      e.preventDefault();
+      openWhatsApp(baseMsg);
+    });
+    document.getElementById('waBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      openWhatsApp(baseMsg);
+    });
+
+    // ===== Maps =====
+    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
+    const mapsEmbed = `https://www.google.com/maps?q=${encodeURIComponent(ADDRESS)}&output=embed`;
+    document.getElementById('miniMapFrame').src = mapsEmbed;
+
+    document.getElementById('openMapsBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.open(mapsLink, '_blank', 'noopener');
+    });
+
+    const miniMapWrap = document.getElementById('miniMapWrap');
+    const mapOverlay = document.getElementById('mapOverlay');
+    let mapIsActive = false;
+
+    mapOverlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      mapIsActive = true;
+      miniMapWrap.classList.add('mapActive');
+    });
+
+    miniMapWrap.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      if (mapIsActive) window.open(mapsLink, '_blank', 'noopener');
+    });
+
+    // ===== Calendar =====
+    function toGoogleDateUTC(d){
+      const yyyy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+      const dd = String(d.getUTCDate()).padStart(2,'0');
+      const hh = String(d.getUTCHours()).padStart(2,'0');
+      const mi = String(d.getUTCMinutes()).padStart(2,'0');
+      const ss = String(d.getUTCSeconds()).padStart(2,'0');
+      return `${yyyy}${mm}${dd}T${hh}${mi}${ss}Z`;
+    }
+    const endDate = new Date(eventDate.getTime() + 3*60*60*1000);
+    const datesParam = `${toGoogleDateUTC(eventDate)}/${toGoogleDateUTC(endDate)}`;
+
+    const calTitle = "CUMPLE";
+    const calDetails = `CONFIRMAR ASISTENCIA POR WHATSAPP: +${PHONE}`;
+    const calLink =
+      `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+      `&text=${encodeURIComponent(calTitle)}` +
+      `&dates=${encodeURIComponent(datesParam)}` +
+      `&details=${encodeURIComponent(calDetails)}` +
+      `&location=${encodeURIComponent(ADDRESS)}`;
+    document.getElementById('calBtn').href = calLink;
+
+    // ===== Countdown =====
+    const countdownEl = document.getElementById('countdownPill');
+    const pad = (n) => String(n).padStart(2,'0');
+
+    function tickCountdown(){
+      const now = new Date();
+      let diff = eventDate.getTime() - now.getTime();
+      if (diff < 0) diff = 0;
+      const totalSec = Math.floor(diff / 1000);
+      const days = Math.floor(totalSec / 86400);
+      const hrs  = Math.floor((totalSec % 86400) / 3600);
+      const mins = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+      countdownEl.textContent = `⏳ FALTAN: ${days}D ${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+    }
+    tickCountdown();
+    setInterval(tickCountdown, 1000);
+
+    // ===== Música =====
+    const music = document.getElementById('bgMusic');
+    const musicBtn = document.getElementById('musicBtn');
+    let musicOn = false;
+
+    function setMusicLabel(){ musicBtn.textContent = `MÚSICA: ${musicOn ? "ON" : "OFF"}`; }
+    setMusicLabel();
+
+    musicBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      (async () => {
+        try{
+          if (!musicOn) { await music.play(); musicOn = true; }
+          else { music.pause(); musicOn = false; }
+          setMusicLabel();
+        } catch(err){
+          toast("NO HAY MÚSICA (assets/music.mp3)");
+        }
+      })();
+    });
+
+    // ===== Compartir =====
+    document.getElementById('shareBtn').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const shareData = {
+        title: "INVITACIÓN",
+        text: `INVITACIÓN. 📍 ${ADDRESS}. 🗓️ ${fmtDateES(eventDate)}.`,
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        try { await navigator.share(shareData); } catch(_) {}
+      } else {
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          toast("LINK COPIADO");
+        } catch(_) {
+          toast("NO SE PUDO COPIAR");
+        }
+      }
+    });
+
+    // ===== Video fallback =====
+    const fb  = document.getElementById('fallback');
+    vid.addEventListener('error', () => {
+      vid.style.display = 'none';
+      fb.style.display = 'grid';
+    });
+
+    // ===== Sparks (solo click) =====
+    function spawnSpark(x, y) {
+      const el = document.createElement('div');
+      el.className = 'spark';
+      const choices = ["🕯️","✨","🔥","✨"];
+      el.textContent = choices[Math.floor(Math.random()*choices.length)];
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      el.style.fontSize = (16 + Math.random()*12).toFixed(0) + "px";
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1100);
+    }
+    window.addEventListener('click', (e) => spawnSpark(e.clientX, e.clientY));
+
+    // ===== Toast =====
+    const toastEl = document.getElementById('toast');
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 1400);
+    }
+  </script>
+</body>
+</html>
